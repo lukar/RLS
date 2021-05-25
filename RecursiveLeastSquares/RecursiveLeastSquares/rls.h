@@ -46,7 +46,7 @@ Matrix<N> operator*(double c, const Matrix<N>& M)
         for (int j = 0; j < N; j++) {
             retv[i][j] = M[i][j] * c;
         }
-    };
+    }
     return retv;
 }
 
@@ -58,7 +58,7 @@ Matrix<N> operator*( const Matrix<N>& M, double c)
         for (int j = 0; j < N; j++) {
             retv[i][j] = M[i][j] * c;
         }
-    };
+    }
     return retv;
 }
 
@@ -70,7 +70,7 @@ Matrix<N> operator-(const Matrix<N>& L, const Matrix<N>& R)
         for (int j = 0; j < N; j++) {
             retv[i][j] = L[i][j] - R[i][j];
         }
-    };
+    }
     return retv;
 }
 
@@ -82,7 +82,7 @@ Matrix<N> operator+(const Matrix<N>& L, const Matrix<N>& R)
         for (int j = 0; j < N; j++) {
             retv[i][j] = L[i][j] + R[i][j];
         }
-    };
+    }
     return retv;
 }
 
@@ -124,7 +124,7 @@ inline Matrix<N> Rls<N>::outer_prod(std::array<double, N> x, std::array<double, 
         for (int j = 0; j < N; j++) {
             retv[i][j] = x[i] * y[j];
         }
-    };
+    }
     return retv;
 }
 
@@ -140,7 +140,7 @@ inline Rls<N>::Rls(std::array<double, N> theta_initial,double alpha, double lamb
     theta_old = theta_initial;
     for (int i = 0; i < N; i++) {
         P_old[i][i] = alpha; I[i] = 1.0;
-    };
+    }
 }
 
 template<int N>
