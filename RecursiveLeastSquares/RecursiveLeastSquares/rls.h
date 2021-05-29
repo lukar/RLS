@@ -1,90 +1,7 @@
 #pragma once
 #include <iostream>
-#include <array> 
+#include "algebra.h"
 
-template <size_t N> using Matrix = std::array<std::array<double, N>, N>;
-
-template <int N>
-std::array<double, N> operator*(double c, const std::array<double, N>& A)
-{
-    std::array<double, N> retv{};
-    for (int i = 0; i < N; i++) {
-        retv[i] = c * A[i];
-    }
-    return retv;
-}
-
-template <int N>
-std::array<double, N> operator*( const std::array<double, N>& A,double c)
-{
-    std::array<double, N> retv{};
-    for (int i = 0; i < N; i++) {
-        retv[i] = c * A[i];
-    }
-    return retv;
-}
-
-template <int N>
-Matrix<N> operator*(const Matrix<N> &L, const Matrix<N> &R)
-{
-    Matrix<N> retv{};
-    for (int i = 0; i < N; i++) {
-        for (int j = 0; j < N; j++) {
-            for (int k = 0; k < N; k++) {
-                retv[i][j] += L[i][k] * R[k][j];
-            }
-        }
-    }
-    return retv;
-}
-
-template <int N>
-Matrix<N> operator*(double c, const Matrix<N>& M)
-{
-    Matrix<N> retv;
-    for (int i = 0; i < N; i++) {
-        for (int j = 0; j < N; j++) {
-            retv[i][j] = M[i][j] * c;
-        }
-    }
-    return retv;
-}
-
-template <int N>
-Matrix<N> operator*( const Matrix<N>& M, double c)
-{
-    Matrix<N> retv;
-    for (int i = 0; i < N; i++) {
-        for (int j = 0; j < N; j++) {
-            retv[i][j] = M[i][j] * c;
-        }
-    }
-    return retv;
-}
-
-template <int N>
-Matrix<N> operator-(const Matrix<N>& L, const Matrix<N>& R)
-{
-    Matrix<N> retv;
-    for (int i = 0; i < N; i++) {
-        for (int j = 0; j < N; j++) {
-            retv[i][j] = L[i][j] - R[i][j];
-        }
-    }
-    return retv;
-}
-
-template <int N>
-Matrix<N> operator+(const Matrix<N>& L, const Matrix<N>& R)
-{
-    Matrix<N> retv;
-    for (int i = 0; i < N; i++) {
-        for (int j = 0; j < N; j++) {
-            retv[i][j] = L[i][j] + R[i][j];
-        }
-    }
-    return retv;
-}
 
 //
 
@@ -92,9 +9,9 @@ template <int N>
 class Rls
 {
     Matrix<N> P_old{}, I{};
-    std::array<double, N> theta_old{}, gamma{}, x{}, tempv{};
-    double err=0.0, y=0.0, alpha=0.0;
-    double lambda = 0.99;
+    std::array<double, N> theta_old{}, theta_gd{}, gamma{}, x{}, tempv{};
+    double alpha=0.0;
+    double lambda = 0.99, err_, err_gd;
 
     double dot(std::array<double, N> x, std::array<double, N> y);
     Matrix<N> outer_prod(std::array<double, N> x, std::array<double, N> y);
@@ -146,8 +63,11 @@ inline Rls<N>::Rls(std::array<double, N> theta_initial,double alpha, double lamb
 template<int N>
 void inline Rls<N>::update(std::array<double, N> x_new, double y_new)
 {
+    double y_hat;
+    double err, y;
     x = x_new; y = y_new;
-    err = y - dot(x, theta_old);
+    y_hat = dot(x, theta_old);
+    err_=err = y - y_hat;
     // new gamma
     for (int i = 0; i < N; i++) { tempv[i] = dot(P_old[i], x); }
     double c = 1.0 / (dot(x, tempv) + lambda);
@@ -155,7 +75,12 @@ void inline Rls<N>::update(std::array<double, N> x_new, double y_new)
     // new theta
     for (int i = 0; i < N; i++) { theta_old[i] += err * gamma[i]; }
     // new P
-    P_old = (1.0 / lambda) * (I-outer_prod(gamma,x)) * P_old;    
+    //P_old = P_old + (0.1 * I); //regularization
+    P_old = (1.0 / lambda) * (I-outer_prod(gamma,x)) * P_old;
+
+    y_hat = dot(x, theta_gd);
+    err_gd = y - y_hat;
+    for (int i = 0; i < N; i++) { theta_gd[i] += 0.01 * err_gd * x[i]; }
 }
 
 template<int N>
@@ -163,10 +88,14 @@ inline void Rls<N>::print()
 {
     std::cout << "Theta is: ";
     for (int i = 0; i < N; i++) { std::cout << theta_old[i] << " "; }
-    std::cout << " error: " << err << "\n";
+    std::cout << " error: " << err_ << "\n";
     for (int i = 0; i < N; i++) {
         for (int j = 0; j < N; j++) std::cout << P_old[i][j] << "\t";
         std::cout << "\n";
     }
     std::cout << "\n";
+
+    std::cout << "Theta GD is: ";
+    for (int i = 0; i < N; i++) { std::cout << theta_gd[i] << " "; }
+    std::cout << " error GD: " << err_gd << "\n";
 }
